@@ -223,3 +223,8 @@ dados_vendas/
 backups_salvos/
 
 credenciais.txt
+
+ambiente/
+build/
+dist/
+main.spec

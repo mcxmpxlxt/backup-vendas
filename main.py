@@ -1,5 +1,6 @@
 import os
 import shutil
+import csv
 from datetime import datetime
 
 def fazer_backup(pasta_origem, pasta_destino):
@@ -27,7 +28,44 @@ def fazer_backup(pasta_origem, pasta_destino):
     
     print(f"Sucesso! Backup salvo em: {caminho_final}")
 
+def gerar_relatorio(caminho_arquivo):
+    """Lê o arquivo de vendas e calcula o faturamento total"""
+    
+    total_faturado = 0.0
+    total_itens = 0
+
+    # No C, esquecer um fclose() causa vazamento de memória. 
+    # O 'with open' do Python abre o arquivo, lê e fecha automaticamente no final.
+    with open(caminho_arquivo, mode='r', encoding='utf-8') as arquivo:
+        # O DictReader lê a primeira linha e transforma as colunas em "chaves" (como um índice customizado)
+        leitor = csv.DictReader(arquivo)
+        
+        # O laço 'for' no Python lê linha por linha sem precisarmos controlar um contador (i++)
+        for linha in leitor:
+            # O Python lê tudo do arquivo como texto (string). Precisamos converter:
+            quantidade = int(linha['Quantidade'])
+            valor = float(linha['Valor'])
+            
+            total_itens += quantidade
+            total_faturado += (quantidade * valor)
+            
+    # O '.2f' formata o número para ter apenas 2 casas decimais, igual no C (%0.2f)
+    resumo = f"Resumo do Dia: {total_itens} produtos vendidos | Faturamento: R$ {total_faturado:.2f}"
+    print(resumo)
+    
+    # A função devolve o texto pronto para usarmos no e-mail depois
+    return resumo
+
 # Ponto de entrada do nosso script (semelhante ao int main() do C)
 if __name__ == "__main__":
+    print("--- Iniciando Sistema ---")
+    
+    # 1. Faz a cópia de segurança
     fazer_backup("dados_vendas", "backups_salvos")
+    
+    # 2. Gera a matemática das vendas passando o caminho correto do arquivo
+    caminho_csv = os.path.join("dados_vendas", "vendas_hoje.csv")
+    resumo_vendas = gerar_relatorio(caminho_csv)
+    
+    print("--- Processo Finalizado ---")
 

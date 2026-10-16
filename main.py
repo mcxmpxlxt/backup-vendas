@@ -31,33 +31,58 @@ def fazer_backup(pasta_origem, pasta_destino):
     print(f"Sucesso! Backup salvo em: {caminho_final}")
 
 def gerar_relatorio(caminho_arquivo):
-    """Lê o arquivo de vendas e calcula o faturamento total com tratamento de erros"""
+    """Lê o arquivo de vendas, calcula o faturamento e estatísticas dos produtos"""
     total_faturado = 0.0
     total_itens = 0
+    
+    # Dicionário para guardar estatísticas de cada produto (como um Array de Structs no C)
+    produtos = {}
 
-    # O 'try' tenta executar o bloco. Se falhar, pula pro 'except'
     try:
         with open(caminho_arquivo, mode='r', encoding='utf-8') as arquivo:
             leitor = csv.DictReader(arquivo)
             for linha in leitor:
+                nome = linha['Produto']
                 quantidade = int(linha['Quantidade'])
                 valor = float(linha['Valor'])
+                receita = quantidade * valor
+                
                 total_itens += quantidade
-                total_faturado += (quantidade * valor)
+                total_faturado += receita
+                
+                # Se o produto já está no dicionário, soma as quantidades e receitas
+                if nome in produtos:
+                    produtos[nome]['quantidade'] += quantidade
+                    produtos[nome]['receita'] += receita
+                # Se é a primeira vez que vemos o produto, cria o registro dele
+                else:
+                    produtos[nome] = {'quantidade': quantidade, 'receita': receita}
         
-        resumo = f"Resumo do Dia: {total_itens} produtos vendidos | Faturamento: R$ {total_faturado:.2f}"
+        # Se a planilha estiver vazia
+        if not produtos:
+            return "Nenhuma venda registrada no arquivo."
+
+        # O max() e min() acham o maior e menor. 
+        # O "key=lambda p:" é o jeito do Python dizer: "compare usando este critério específico"
+        produto_mais_vendido = max(produtos, key=lambda p: produtos[p]['quantidade'])
+        produto_menos_vendido = min(produtos, key=lambda p: produtos[p]['quantidade'])
+        produto_maior_renda = max(produtos, key=lambda p: produtos[p]['receita'])
+
+        # Montando o texto do resumo formatado. As 3 aspas duplas permitem pular linha livremente!
+        resumo = f"""Resumo do Dia: {total_itens} produtos vendidos | Faturamento Geral: R$ {total_faturado:.2f}
+
+Destaques do dia:
+- Mais vendido (Quantidade): {produto_mais_vendido} ({produtos[produto_mais_vendido]['quantidade']} unidades)
+- Menos vendido (Quantidade): {produto_menos_vendido} ({produtos[produto_menos_vendido]['quantidade']} unidades)
+- Maior Geração de Renda: {produto_maior_renda} (R$ {produtos[produto_maior_renda]['receita']:.2f})"""
+        
         print(resumo)
         return resumo
         
     except FileNotFoundError:
-        erro_msg = "ALERTA: O arquivo de vendas não foi encontrado no sistema!"
-        print(erro_msg)
-        return erro_msg
+        return "ALERTA: O arquivo de vendas não foi encontrado no sistema!"
     except Exception as e:
-        # Captura qualquer outro erro inesperado
-        erro_msg = f"ALERTA: Erro ao processar o relatório: {str(e)}"
-        print(erro_msg)
-        return erro_msg
+        return f"ALERTA: Erro ao processar o relatório: {str(e)}"
 
 def enviar_email(resumo):
     """Lê as credenciais e envia o resumo das vendas por e-mail"""

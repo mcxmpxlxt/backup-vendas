@@ -228,3 +228,5 @@ ambiente/
 build/
 dist/
 main.spec
+
+historico_mensal.json

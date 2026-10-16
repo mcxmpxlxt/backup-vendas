@@ -17,7 +17,7 @@ Um sistema automatizado em Python focado em segurança de dados e inteligência 
 
 ## Tecnologias utilizadas
 - Python 3
-- Bibliotecas nativas: `os`, `shutil`, `datetime`, `csv`, `smtplib`.
+- Bibliotecas nativas: `os`, `shutil`, `datetime`, `csv`, `smtplib`, `json`.
 
 ## Empacotamento
 Para gerar um executável deste script para o cliente final (dispensando a instalação do Python), utilize a biblioteca PyInstaller:

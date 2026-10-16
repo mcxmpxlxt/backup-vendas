@@ -1,6 +1,8 @@
 import os
 import shutil
 import csv
+import smtplib
+from email.message import EmailMessage
 from datetime import datetime
 
 def fazer_backup(pasta_origem, pasta_destino):
@@ -56,16 +58,51 @@ def gerar_relatorio(caminho_arquivo):
     # A função devolve o texto pronto para usarmos no e-mail depois
     return resumo
 
+def enviar_email(resumo):
+    """Lê as credenciais e envia o resumo das vendas por e-mail"""
+    print("Preparando para enviar o e-mail...")
+    
+    # Lê o e-mail e a senha do nosso arquivo seguro
+    with open('credenciais.txt', 'r') as f:
+        linhas = f.readlines()
+        # O .strip() no Python remove espaços extras e a quebra de linha (\n) do final
+        email_bot = linhas[0].strip()
+        senha_bot = linhas[1].strip()
+
+    # Montando a estrutura do e-mail
+    msg = EmailMessage()
+    msg['Subject'] = 'Relatório Automático de Vendas e Backup'
+    msg['From'] = email_bot
+    msg['To'] = email_bot # Vamos mandar para nós mesmos como teste
+    
+    # Corpo do e-mail
+    corpo = f"""Olá, 
+
+Aqui está o fechamento do seu negócio hoje:
+{resumo}
+
+O backup dos arquivos foi realizado com sucesso.
+Sistema operando 100%.
+"""
+    msg.set_content(corpo)
+
+    # Conectando no servidor do Gmail (porta 465 é a porta segura padrão)
+    with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
+        smtp.login(email_bot, senha_bot)
+        smtp.send_message(msg)
+        
+    print("E-mail enviado com sucesso!")
+
 # Ponto de entrada do nosso script (semelhante ao int main() do C)
 if __name__ == "__main__":
     print("--- Iniciando Sistema ---")
-    
-    # 1. Faz a cópia de segurança
     fazer_backup("dados_vendas", "backups_salvos")
     
-    # 2. Gera a matemática das vendas passando o caminho correto do arquivo
     caminho_csv = os.path.join("dados_vendas", "vendas_hoje.csv")
     resumo_vendas = gerar_relatorio(caminho_csv)
+    
+    # Chamando a nova função e passando a variável do relatório
+    enviar_email(resumo_vendas)
     
     print("--- Processo Finalizado ---")
 

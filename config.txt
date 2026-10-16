@@ -1,0 +1,3 @@
+pasta_origem=dados_vendas
+pasta_destino=backups_salvos
+nome_arquivo_vendas=vendas_hoje.csv

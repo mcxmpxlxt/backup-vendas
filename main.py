@@ -5,6 +5,27 @@ import smtplib
 from email.message import EmailMessage
 from datetime import datetime
 
+def carregar_configuracoes():
+    """Lê o arquivo config.txt e retorna um dicionário com os valores"""
+    config = {}
+    try:
+        with open('config.txt', 'r', encoding='utf-8') as f:
+            for linha in f:
+                # Ignora linhas em branco
+                if not linha.strip():
+                    continue
+                
+                # O split('=') divide "pasta=dados" em ['pasta', 'dados']
+                partes = linha.strip().split('=')
+                if len(partes) == 2:
+                    chave = partes[0].strip()
+                    valor = partes[1].strip()
+                    config[chave] = valor
+        return config
+    except FileNotFoundError:
+        print("ERRO: Arquivo config.txt não encontrado! O sistema não pode continuar.")
+        return None
+
 def fazer_backup(pasta_origem, pasta_destino):
     """Função que copia os dados e gera um backup com data e hora"""
     
@@ -122,13 +143,29 @@ Sistema operando 100%.
 # Ponto de entrada do nosso script (semelhante ao int main() do C)
 if __name__ == "__main__":
     print("--- Iniciando Sistema ---")
-    fazer_backup("dados_vendas", "backups_salvos")
     
-    caminho_csv = os.path.join("dados_vendas", "vendas_hoje.csv")
+    # 1. Carrega as configurações do cliente
+    config = carregar_configuracoes()
+    
+    # Se o arquivo não existir, encerra o programa antecipadamente
+    if not config:
+        print("--- Processo Abortado ---")
+        # Encerra o script com erro (exit code 1)
+        exit(1)
+        
+    # 2. Extraindo as variáveis do dicionário
+    pasta_dados = config.get('pasta_origem', 'dados_vendas')
+    pasta_backups = config.get('pasta_destino', 'backups_salvos')
+    arquivo_vendas = config.get('nome_arquivo_vendas', 'vendas_hoje.csv')
+    
+    # 3. Executando o fluxo com as configurações dinâmicas
+    fazer_backup(pasta_dados, pasta_backups)
+    
+    caminho_csv = os.path.join(pasta_dados, arquivo_vendas)
     resumo_vendas = gerar_relatorio(caminho_csv)
     
-    # Chamando a nova função e passando a variável do relatório
-    enviar_email(resumo_vendas)
+    # Se o relatório não for erro, envia o e-mail
+    if not "ALERTA" in resumo_vendas:
+         enviar_email(resumo_vendas)
     
     print("--- Processo Finalizado ---")
-
